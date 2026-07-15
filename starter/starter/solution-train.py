@@ -126,13 +126,13 @@ def main():
     # quick sanity check on held-out TURNS (never split a turn across sets)
     tr, te = next(GroupShuffleSplit(n_splits=1, test_size=0.25, random_state=0)
                   .split(X, y, groups))
-    # clf = LogisticRegression(max_iter=1000, class_weight="balanced")
-    clf = HistGradientBoostingClassifier(
-    learning_rate=0.05,
-    max_depth=3,
-    max_iter=200,
-    random_state=0
-)
+    clf = LogisticRegression(max_iter=1000, class_weight="balanced")
+#     clf = HistGradientBoostingClassifier(
+#     learning_rate=0.05,
+#     max_depth=3,
+#     max_iter=200,
+#     random_state=0
+# )
     clf.fit(X[tr], y[tr])
     print(f"held-out turn accuracy: {clf.score(X[te], y[te]):.3f} "
           f"(chance ~ {max(np.mean(y), 1-np.mean(y)):.3f})")

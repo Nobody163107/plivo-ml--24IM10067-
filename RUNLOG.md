@@ -124,3 +124,86 @@ Interrupted turns: 4.0%
 MFCC features significantly improved ranking performance (AUC) while
 slightly reducing response delay. This suggests spectral cues provide
 additional information beyond prosodic features.
+
+## Experiment 3: Classifier Comparison (HistGradientBoosting)
+
+### Motivation
+
+After improving the feature representation with prosodic features and MFCCs,
+we evaluated whether a more expressive nonlinear classifier could improve
+End-of-Turn detection.
+
+### Change
+
+Replaced Logistic Regression with:
+
+- HistGradientBoostingClassifier
+- learning_rate = 0.05
+- max_depth = 3
+- max_iter = 200
+
+The feature extraction pipeline remained unchanged (37 features).
+
+### Results (English)
+
+Held-out turn accuracy: 0.492
+
+Training-set scorer results:
+
+- AUC: 1.000
+- Mean response delay: 100 ms
+- Interrupted turns: 2.0%
+
+### Analysis
+
+Although the scorer reported near-perfect performance, the held-out accuracy
+decreased compared to the Logistic Regression model.
+
+This indicates that the Gradient Boosting model overfit the training data.
+The assignment scorer evaluates predictions generated after refitting on the
+entire dataset, which can produce overly optimistic results for high-capacity
+models.
+
+### Decision
+
+Rejected.
+
+The final solution retains Logistic Regression because it provides better
+generalization while still achieving strong performance after feature
+engineering.
+
+---
+
+## Final Selected Model
+
+### Feature Extraction
+
+- 1.5-second causal speech window before each pause
+- Energy statistics
+- Energy slope
+- Pitch statistics
+- Pitch slope
+- Voiced-frame ratio
+- Speech context duration
+- 13 MFCC mean coefficients
+- 13 MFCC standard deviations
+
+Total feature dimension: 37
+
+### Classifier
+
+Logistic Regression
+
+- class_weight = balanced
+- max_iter = 1000
+
+### Final English Performance
+
+AUC: 0.726
+
+Mean response delay: 1157 ms
+
+Interrupted turns: 4.0%
+
+This configuration was selected as the final model due to its superior
+generalization compared to higher-capacity alternatives.
