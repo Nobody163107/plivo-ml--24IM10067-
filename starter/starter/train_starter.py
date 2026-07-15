@@ -18,19 +18,15 @@ import argparse
 import csv
 import os
 
-import joblib
-import librosa
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GroupShuffleSplit
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
 
 from features import frame_energy_db, f0_contour, load_wav, speech_before
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Create the CLI parser for training."""
+    """Create the CLI parser for the starter training script."""
     parser = argparse.ArgumentParser(description="Train the starter EOT classifier.")
     parser.add_argument("--data_dir", required=True, help="Directory containing labels.csv")
     parser.add_argument("--out", default="predictions.csv", help="Output CSV path")
@@ -38,52 +34,22 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def extract_features(x, sr, pause_start):
-    """Extract features from audio strictly before the pause start."""
+    """Extract a compact feature vector from audio strictly before the pause."""
     seg = speech_before(x, sr, pause_start, window_s=1.5)
-
     if len(seg) < sr // 10:
-        return np.zeros(11, dtype=np.float32)
-
-    features = []
+        return np.zeros(3, dtype=np.float32)
 
     e = frame_energy_db(seg, sr)
-    features.append(np.mean(e))
-    features.append(np.std(e))
-    features.append(np.max(e))
-    features.append(e[-1])
-
-    if len(e) > 1:
-        energy_slope = np.polyfit(np.arange(len(e)), e, 1)[0]
-    else:
-        energy_slope = 0.0
-
-    features.append(energy_slope)
-
     f0 = f0_contour(seg, sr)
     voiced = f0[f0 > 0]
-
-    if len(voiced):
-        features.append(np.mean(voiced))
-        features.append(np.std(voiced))
-        features.append(voiced[-1])
-
-        if len(voiced) > 1:
-            pitch_slope = np.polyfit(np.arange(len(voiced)), voiced, 1)[0]
-        else:
-            pitch_slope = 0.0
-
-        features.append(pitch_slope)
-        features.append(len(voiced) / len(f0))
-    else:
-        features.extend([0, 0, 0, 0, 0])
-
-    features.append(len(seg) / sr)
-
-    mfcc = librosa.feature.mfcc(y=seg, sr=sr, n_mfcc=13)
-    features.extend(np.mean(mfcc, axis=1))
-    features.extend(np.std(mfcc, axis=1))
-
-    return np.array(features, dtype=np.float32)
+    return np.array(
+        [
+            e[-5:].mean(),
+            voiced[-3:].mean() if len(voiced) >= 3 else 0.0,
+            len(seg) / sr,
+        ],
+        dtype=np.float32,
+    )
 
 
 def main() -> None:
@@ -109,10 +75,7 @@ def main() -> None:
     train_idx, test_idx = next(
         GroupShuffleSplit(n_splits=1, test_size=0.25, random_state=0).split(X, y, groups)
     )
-    clf = make_pipeline(
-        StandardScaler(),
-        LogisticRegression(max_iter=3000, class_weight="balanced", random_state=0),
-    )
+    clf = LogisticRegression(max_iter=1000, class_weight="balanced")
     clf.fit(X[train_idx], y[train_idx])
     print(
         f"held-out turn accuracy: {clf.score(X[test_idx], y[test_idx]):.3f} "
@@ -120,9 +83,6 @@ def main() -> None:
     )
 
     clf.fit(X, y)
-    joblib.dump(clf, os.path.join(os.path.dirname(__file__), "model.pkl"))
-
-    print("Saved trained model.")
     p = clf.predict_proba(X)[:, 1]
     with open(args.out, "w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)

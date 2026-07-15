@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>End-of-Turn Prediction Report</title>
+<link rel="stylesheet" href="style.css"></head><body>
+<header class="hero">
+<div class="wrap">
+<h1>End-of-Turn Prediction using Prosodic & Spectral Features</h1>
+<p class="sub">Plivo ML Engineering Assignment • Venkata Sai Praneeth Tadi</p>
+<div class="grid4">
+<div class="metric"><h3>Final Model</h3><p>StandardScaler + Logistic Regression</p></div>
+<div class="metric"><h3>Features</h3><p>37 handcrafted</p></div>
+<div class="metric"><h3>English</h3><p><b>AUC 0.745</b></p></div>
+<div class="metric"><h3>Hindi</h3><p><b>AUC 0.814</b></p></div>
+</div></div></header>
+
+<div class="wrap">
+<section><h2>Objective</h2><p>Predict whether a pause corresponds to <b>End-of-Turn (EOT)</b> or <b>Hold</b> using only causal information before <code>pause_start</code>. No future audio or pause end timestamps are used.</p></section>
+
+<section><h2>Engineering Timeline</h2>
+<ol class="timeline">
+<li><b>Baseline</b> – constant predictor.</li>
+<li><b>Prosodic features</b> – energy and pitch statistics.</li>
+<li><b>MFCC features</b> – added 26 spectral descriptors.</li>
+<li><b>HistGradientBoosting</b> – rejected after detecting overfitting.</li>
+<li><b>StandardScaler + Logistic Regression</b> – selected as final model.</li>
+</ol></section>
+
+<section class="two">
+<div><h2>Inference Pipeline</h2><div class="pipe">
+Audio → 1.5 s Window → Energy + Pitch + MFCC → StandardScaler → Logistic Regression → P(EOT)
+</div></div>
+<div><h2>Feature Categories</h2>
+<table><tr><th>Category</th><th>Count</th></tr>
+<tr><td>Energy</td><td>5</td></tr>
+<tr><td>Pitch</td><td>5</td></tr>
+<tr><td>Speech Context</td><td>1</td></tr>
+<tr><td>MFCC</td><td>26</td></tr>
+<tr><td><b>Total</b></td><td><b>37</b></td></tr></table></div>
+</section>
+
+<section><h2>Experiment Progression</h2>
+<table><tr><th>Experiment</th><th>English AUC</th><th>Observation</th></tr>
+<tr><td>Baseline</td><td>0.514</td><td>Reference implementation</td></tr>
+<tr><td>Prosody</td><td>0.599</td><td>Meaningful improvement</td></tr>
+<tr><td>+ MFCC</td><td>0.726</td><td>Spectral cues helped</td></tr>
+<tr><td>Gradient Boosting</td><td>1.000 (train)</td><td>Overfit; rejected</td></tr>
+<tr><td><b>+ Scaling</b></td><td><b>0.745</b></td><td><b>Final model</b></td></tr></table>
+</section>
+
+<section><h2>Performance</h2>
+<div class="bars">
+<label>English<div><span style="width:74.5%">AUC 0.745</span></div></label>
+<label>Hindi<div><span style="width:81.4%">AUC 0.814</span></div></label>
+</div>
+<table><tr><th>Dataset</th><th>Held-out Acc.</th><th>AUC</th><th>Delay</th></tr>
+<tr><td>English</td><td>0.585</td><td>0.745</td><td>1045 ms</td></tr>
+<tr><td>Hindi</td><td>0.552</td><td>0.814</td><td>850 ms</td></tr></table>
+</section>
+
+<section class="two">
+<div><h2>Key Learnings</h2><ul>
+<li>Prosodic cues are useful.</li>
+<li>MFCCs improve ranking.</li>
+<li>Scaling improves optimization.</li>
+<li>Simple linear models generalized best.</li>
+<li>Inference remains fully causal.</li></ul></div>
+<div><h2>Repository</h2><pre>train.py
+predict.py
+features.py
+model.pkl
+RUNLOG.md
+NOTES.md
+README.md</pre></div>
+</section>
+<footer>Prepared for the Plivo ML Engineering Assignment</footer>
+</div></body></html>

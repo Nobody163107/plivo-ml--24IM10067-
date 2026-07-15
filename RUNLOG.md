@@ -259,35 +259,6 @@ engineering.
 
 ---
 
-## Final Selected Model
-
-### Feature Extraction
-
-- 1.5-second causal speech window before each pause
-- Energy statistics
-- Energy slope
-- Pitch statistics
-- Pitch slope
-- Voiced-frame ratio
-- Speech context duration
-- 13 MFCC mean coefficients
-- 13 MFCC standard deviations
-
-Total feature dimension: 37
-
-### Classifier
-
-Logistic Regression
-
-- class_weight = balanced
-- max_iter = 1000
-
-### Final  Performance
-
-| Dataset | Held-out Accuracy | AUC | Mean Delay |
-|---------|------------------:|----:|-----------:|
-| English | 0.554 |   0.726   |   1157 ms |
-| Hindi   | 0.603 | 0.809   |   753 ms |
 
 ## Experiment 4: Feature Standardization
 
@@ -319,3 +290,49 @@ The feature extraction pipeline remained unchanged.
 Feature standardization improved optimization and increased AUC on both
 datasets without increasing model complexity. The StandardScaler +
 LogisticRegression pipeline was selected as the final model.
+
+
+
+## Final Selected Model
+
+### Feature Extraction
+
+- 1.5-second causal speech window before each pause
+- Energy statistics
+- Energy slope
+- Pitch statistics
+- Pitch slope
+- Voiced-frame ratio
+- Speech context duration
+- 13 MFCC mean coefficients
+- 13 MFCC standard deviations
+
+Total feature dimension: 37
+
+### Classifier
+
+Pipeline(
+    StandardScaler(),
+    LogisticRegression(
+        class_weight="balanced",
+        max_iter=3000
+    )
+)
+
+### Final  Performance
+
+| Dataset | Held-out Accuracy |       AUC |  Mean Delay |
+| ------- | ----------------: | --------: | ----------: |
+| English |         **0.585** | **0.745** | **1045 ms** |
+| Hindi   |         **0.552** | **0.814** |  **850 ms** |
+
+## Final Inference Pipeline
+
+Implemented a standalone `predict.py` that:
+
+- Loads the trained model from disk using Joblib.
+- Extracts the same handcrafted feature vector.
+- Produces causal pause-level predictions.
+- Writes predictions in the required CSV format.
+
+The inference pipeline reproduces the validation performance obtained during training, ensuring consistency between training and deployment.
