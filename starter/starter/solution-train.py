@@ -20,6 +20,8 @@ import librosa
 from sklearn.ensemble import HistGradientBoostingClassifier
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GroupShuffleSplit
 
 from features import load_wav, speech_before, frame_energy_db, f0_contour
@@ -35,9 +37,7 @@ def extract_features(x, sr, pause_start):
 
     features = []
 
-    # ============================
     # ENERGY FEATURES
-    # ============================
     e = frame_energy_db(seg, sr)
 
     features.append(np.mean(e))          # Mean energy
@@ -126,7 +126,14 @@ def main():
     # quick sanity check on held-out TURNS (never split a turn across sets)
     tr, te = next(GroupShuffleSplit(n_splits=1, test_size=0.25, random_state=0)
                   .split(X, y, groups))
-    clf = LogisticRegression(max_iter=1000, class_weight="balanced")
+    clf = make_pipeline(
+    StandardScaler(),
+    LogisticRegression(
+        max_iter=3000,
+        class_weight="balanced",
+        random_state=0
+    )
+)
 #     clf = HistGradientBoostingClassifier(
 #     learning_rate=0.05,
 #     max_depth=3,

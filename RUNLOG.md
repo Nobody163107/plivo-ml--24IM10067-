@@ -52,7 +52,7 @@ Name: count, dtype: int64
 
 ---
 
-## Experiment 1: Prosodic Feature Engineering
+## Experiment 1: Prosodic Feature Engineering (English)
 
 ### Changes
 
@@ -92,7 +92,51 @@ Compared to the baseline:
 
 This indicates that acoustic cues before the pause provide meaningful information for end-of-turn prediction.
 
-## Experiment 2: Added Spectral Features (MFCC)
+
+## Experiment 1 (Hindi): Enhanced Prosodic Features
+
+### Motivation
+
+Evaluate whether the improved handcrafted prosodic features (energy and
+pitch statistics) generalize to the Hindi dataset.
+
+### Changes
+
+Added:
+
+- Mean energy
+- Energy standard deviation
+- Peak energy
+- Final frame energy
+- Energy slope
+- Mean pitch
+- Pitch standard deviation
+- Final pitch
+- Pitch slope
+- Voiced frame ratio
+- Speech context duration
+
+Feature vector size increased from 3 to 11.
+
+### Results (Hindi)
+
+Held-out turn accuracy: 0.552
+
+AUC: 0.729
+
+Mean response delay: 850 ms
+
+Interrupted turns: 5.0%
+
+### Conclusion
+
+The enhanced prosodic features generalized well to the Hindi dataset,
+providing a significant improvement over the baseline. Pitch and energy
+statistics appear to be strong indicators of End-of-Turn detection for
+Hindi speech.
+
+
+## Experiment 2: Added Spectral Features (MFCC) -> (English)
 
 ### Motivation
 
@@ -124,6 +168,47 @@ Interrupted turns: 4.0%
 MFCC features significantly improved ranking performance (AUC) while
 slightly reducing response delay. This suggests spectral cues provide
 additional information beyond prosodic features.
+
+## Experiment 2 (Hindi): Added Spectral Features (MFCC)
+
+### Motivation
+
+Prosodic features capture loudness and pitch but ignore the spectral
+characteristics of speech. MFCCs summarize the short-term spectral envelope
+and are widely used in speech recognition tasks.
+
+### Changes
+
+Added:
+
+- 13 MFCC mean coefficients
+- 13 MFCC standard deviation coefficients
+
+Feature vector size increased from 11 to 37.
+
+### Results (Hindi)
+
+Held-out turn accuracy: 0.603
+
+AUC: 0.809
+
+Mean response delay: 753 ms
+
+Interrupted turns: 5.0%
+
+### Notes
+
+Training produced a Logistic Regression convergence warning, indicating
+that the optimizer reached the maximum iteration limit. Despite this,
+performance improved substantially over the prosodic-only model.
+
+### Conclusion
+
+MFCC features significantly improved both ranking performance (AUC) and
+response latency on the Hindi dataset, demonstrating that spectral
+information complements prosodic cues for End-of-Turn detection.
+
+
 
 ## Experiment 3: Classifier Comparison (HistGradientBoosting)
 
@@ -197,13 +282,40 @@ Logistic Regression
 - class_weight = balanced
 - max_iter = 1000
 
-### Final English Performance
+### Final  Performance
 
-AUC: 0.726
+| Dataset | Held-out Accuracy | AUC | Mean Delay |
+|---------|------------------:|----:|-----------:|
+| English | 0.554 |   0.726   |   1157 ms |
+| Hindi   | 0.603 | 0.809   |   753 ms |
 
-Mean response delay: 1157 ms
+## Experiment 4: Feature Standardization
 
-Interrupted turns: 4.0%
+### Motivation
 
-This configuration was selected as the final model due to its superior
-generalization compared to higher-capacity alternatives.
+The handcrafted feature vector combines heterogeneous features such as energy,
+pitch, speech duration and MFCC coefficients, each with different numerical
+ranges. Logistic Regression typically performs better when input features are
+standardized.
+
+### Changes
+
+Wrapped the classifier in a scikit-learn pipeline:
+
+- StandardScaler
+- LogisticRegression (class_weight="balanced", max_iter=3000)
+
+The feature extraction pipeline remained unchanged.
+
+### Results
+
+| Dataset | Held-out Accuracy | AUC | Mean Delay |
+|---------|------------------:|----:|-----------:|
+| English | 0.585 | 0.745 | 1045 ms |
+| Hindi | 0.552 | 0.814 | 850 ms |
+
+### Conclusion
+
+Feature standardization improved optimization and increased AUC on both
+datasets without increasing model complexity. The StandardScaler +
+LogisticRegression pipeline was selected as the final model.
