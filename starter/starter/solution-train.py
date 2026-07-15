@@ -16,7 +16,8 @@ Ideas worth testing (this is the assignment, not a checklist):
 import argparse
 import csv
 import os
-
+import librosa
+from sklearn.ensemble import HistGradientBoostingClassifier
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GroupShuffleSplit
@@ -26,7 +27,7 @@ from features import load_wav, speech_before, frame_energy_db, f0_contour
 
 def extract_features(x, sr, pause_start):
     """Features from audio STRICTLY BEFORE pause_start.  <-- YOUR WORK"""
-     seg = speech_before(x, sr, pause_start, window_s=1.5)
+    seg = speech_before(x, sr, pause_start, window_s=1.5)
 
     # Very short segment
     if len(seg) < sr // 10:
@@ -85,6 +86,20 @@ def extract_features(x, sr, pause_start):
    
 
     features.append(len(seg) / sr)
+    
+    
+    
+    # MFCC FEATURES
+
+    mfcc = librosa.feature.mfcc(
+        y=seg,
+        sr=sr,
+        n_mfcc=13
+    )
+
+    features.extend(np.mean(mfcc, axis=1))
+    features.extend(np.std(mfcc, axis=1))
+    
 
     return np.array(features, dtype=np.float32)
 
@@ -111,7 +126,13 @@ def main():
     # quick sanity check on held-out TURNS (never split a turn across sets)
     tr, te = next(GroupShuffleSplit(n_splits=1, test_size=0.25, random_state=0)
                   .split(X, y, groups))
-    clf = LogisticRegression(max_iter=1000, class_weight="balanced")
+    # clf = LogisticRegression(max_iter=1000, class_weight="balanced")
+    clf = HistGradientBoostingClassifier(
+    learning_rate=0.05,
+    max_depth=3,
+    max_iter=200,
+    random_state=0
+)
     clf.fit(X[tr], y[tr])
     print(f"held-out turn accuracy: {clf.score(X[te], y[te]):.3f} "
           f"(chance ~ {max(np.mean(y), 1-np.mean(y)):.3f})")

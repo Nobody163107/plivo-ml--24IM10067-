@@ -91,3 +91,36 @@ Compared to the baseline:
 - Mean response delay reduced from 1600 ms to 1190 ms while satisfying the interruption constraint.
 
 This indicates that acoustic cues before the pause provide meaningful information for end-of-turn prediction.
+
+## Experiment 2: Added Spectral Features (MFCC)
+
+### Motivation
+
+Prosodic features capture loudness and pitch but ignore the spectral
+characteristics of speech. MFCCs summarize the short-term spectral envelope
+and are widely used in speech recognition tasks.
+
+### Changes
+
+Added:
+
+- 13 MFCC means
+- 13 MFCC standard deviations
+
+Feature vector size increased from 11 to 37.
+
+### Results (English)
+
+Held-out accuracy: 0.554
+
+AUC: 0.726
+
+Mean response delay: 1157 ms
+
+Interrupted turns: 4.0%
+
+### Conclusion
+
+MFCC features significantly improved ranking performance (AUC) while
+slightly reducing response delay. This suggests spectral cues provide
+additional information beyond prosodic features.
