@@ -49,3 +49,45 @@ label
 hold    148
 eot     100
 Name: count, dtype: int64
+
+---
+
+## Experiment 1: Prosodic Feature Engineering
+
+### Changes
+
+Replaced the starter feature extractor with a richer handcrafted feature set.
+
+Added features:
+
+- Mean frame energy
+- Energy standard deviation
+- Peak energy
+- Final frame energy
+- Energy slope
+- Mean pitch (F0)
+- Pitch standard deviation
+- Final pitch
+- Pitch slope
+- Voiced frame ratio
+- Speech context length
+
+The classifier remained unchanged (Logistic Regression with balanced class weights).
+
+### Results (English)
+
+- Held-out turn accuracy: 0.600
+- AUC: 0.599
+- Mean response delay: 1190 ms
+- Interrupted turns: 5.0%
+
+### Observations
+
+Feature engineering substantially improved the model.
+
+Compared to the baseline:
+
+- AUC improved from 0.514 to 0.599.
+- Mean response delay reduced from 1600 ms to 1190 ms while satisfying the interruption constraint.
+
+This indicates that acoustic cues before the pause provide meaningful information for end-of-turn prediction.
